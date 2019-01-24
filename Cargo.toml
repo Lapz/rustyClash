@@ -9,3 +9,4 @@ serde = {version ="*",features=["derive"]}
 url = "*"
 reqwest = "=0.9.8"
 serde_json = "*"
+failure="0.1.5"

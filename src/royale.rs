@@ -25,14 +25,12 @@ impl<'a> Royale<'a> {
 
     pub fn search_clans(&mut self, query: ClanSearch) -> reqwest::Result<Response> {
         let url = query.build();
-
-        println!("{}",url);
         self.client.get(url).send()
     }
 
     pub fn clan(tag: ClanTag) {
         let url = format!("{}/clans/{:?}",crate::APIROOT,tag);
-        let url = Url::parse(&url).unwrap()?;
+        let url = Url::parse(&url).unwrap();
 
     }
 }

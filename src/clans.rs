@@ -2,6 +2,8 @@ use reqwest::{self, Client, IntoUrl, Method, Request, RequestBuilder, Response, 
 use serde::{Serialize,Deserialize};
 use std::fmt::{self, Display};
 use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
+use failure::{Error,Fail};
+
 
 #[derive(Debug,Serialize,Deserialize,)]
 pub struct Clan {
@@ -69,14 +71,36 @@ pub struct Arena {
 #[derive(Debug,Serialize,Deserialize,)]
 pub struct ClanTag(String);
 
+#[derive(Debug,Fail)]
+pub enum ClanTagError {
+    #[fail(display="Empty clan tag")]
+    EmptyClanTag,
+    #[fail(display="Missing `#` : {}",tag)]
+    MissingHash {
+        tag:String
+    },
+    #[fail(display="A non alphanumeric character was found {}",tag)]
+    NonAlphaNumericCharacter {
+        tag: String
+    }
+}
+
 impl ClanTag {
-    pub fn new(tag: &str) -> Result<ClanTag, ()> {
+    pub fn new(tag: &str) -> Result<ClanTag, Error> {
         if tag.is_empty() {
-            return Err(());
+            return Err(ClanTagError::EmptyClanTag.into())
         }
 
         if &tag[0..1] != "#" {
-            return Err(());
+            return Err(ClanTagError::MissingHash {
+                tag:tag.to_string(),
+            }.into());
+        }
+
+        if !(tag.chars().all(char::is_alphanumeric)) {
+            return Err(ClanTagError::NonAlphaNumericCharacter {
+                tag:tag.to_string(),
+            }.into())
         }
 
         Ok(ClanTag(
