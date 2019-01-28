@@ -1,5 +1,5 @@
 use failure::{Error, Fail};
-use reqwest::{self, Client, IntoUrl, Method, Request, RequestBuilder, Response, Url};
+use reqwest::{self, Client,Url};
 use serde::{Deserialize, Serialize};
 use std::fmt::{self, Display};
 use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};

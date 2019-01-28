@@ -1,6 +1,6 @@
 use crate::clans::*;
 use failure::Error;
-use reqwest::{self, header, Client, ClientBuilder, Response, Url};
+use reqwest::{self, header, Client};
 
 pub type RoyalError<T> = Result<T, Error>;
 
