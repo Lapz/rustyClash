@@ -1,11 +1,10 @@
+use failure::{Error, Fail};
 use reqwest::{self, Client, IntoUrl, Method, Request, RequestBuilder, Response, Url};
-use serde::{Serialize,Deserialize};
+use serde::{Deserialize, Serialize};
 use std::fmt::{self, Display};
 use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
-use failure::{Error,Fail};
 
-
-#[derive(Debug,Serialize,Deserialize,)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Clan {
     tag: ClanTag,
     name: String,
@@ -32,7 +31,7 @@ pub struct Clan {
     members_list: Option<Vec<ClanMember>>,
 }
 
-#[derive(Debug,Serialize,Deserialize,)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Location {
     id: i32,
     name: String,
@@ -42,7 +41,7 @@ pub struct Location {
     country_code: Option<String>,
 }
 
-#[derive(Debug,Serialize,Deserialize,)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ClanMember {
     tag: String,
     name: String,
@@ -53,60 +52,32 @@ pub struct ClanMember {
     role: String,
     #[serde(rename = "clanRank")]
     clan_rank: i32,
-    #[serde(rename = "reviousClanRank")]
+    #[serde(rename = "previousClanRank")]
     previous_clan_rank: i32,
     donations: i32,
     #[serde(rename = "donationsReceived")]
     donations_received: i32,
     #[serde(rename = "clanChestPoints")]
-    clan_chest_points: i32,
+    clan_chest_points: Option<i32>,
 }
 
-#[derive(Debug,Serialize,Deserialize,)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Arena {
     id: i32,
     name: String,
 }
 
-#[derive(Debug,Serialize,Deserialize,)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ClanTag(String);
 
-#[derive(Debug,Fail)]
+#[derive(Debug, Fail)]
 pub enum ClanTagError {
-    #[fail(display="Empty clan tag")]
+    #[fail(display = "Empty clan tag")]
     EmptyClanTag,
-    #[fail(display="Missing `#` : {}",tag)]
-    MissingHash {
-        tag:String
-    },
-    #[fail(display="A non alphanumeric character was found {}",tag)]
-    NonAlphaNumericCharacter {
-        tag: String
-    }
-}
-
-impl ClanTag {
-    pub fn new(tag: &str) -> Result<ClanTag, Error> {
-        if tag.is_empty() {
-            return Err(ClanTagError::EmptyClanTag.into())
-        }
-
-        if &tag[0..1] != "#" {
-            return Err(ClanTagError::MissingHash {
-                tag:tag.to_string(),
-            }.into());
-        }
-
-        if !(tag.chars().all(char::is_alphanumeric)) {
-            return Err(ClanTagError::NonAlphaNumericCharacter {
-                tag:tag.to_string(),
-            }.into())
-        }
-
-        Ok(ClanTag(
-            utf8_percent_encode(tag, DEFAULT_ENCODE_SET).collect(),
-        ))
-    }
+    #[fail(display = "Missing `#` : {}", tag)]
+    MissingHash { tag: String },
+    #[fail(display = "Invalid Clantag {}", tag)]
+    NonAlphaNumericCharacter { tag: String },
 }
 
 #[derive(Serialize, Clone, Default)]
@@ -125,16 +96,100 @@ pub struct ClanSearch<'a> {
     before: Option<i32>,
 }
 
-#[derive(Debug,Serialize,Deserialize, Clone)]
-pub struct SearchResponse<T:Serialize> {
-    items:Vec<T>,
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SearchResponse<T: Serialize> {
+    items: Vec<T>,
     #[serde(skip_deserializing)]
-    paging: Paging
+    paging: Paging,
 }
 
-#[derive(Debug,Serialize, Clone,Default)]
+#[derive(Debug, Serialize, Clone, Default)]
 pub struct Paging {
-    cursors:Vec<()>
+    cursors: Vec<()>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct WarLog {
+    items: Vec<ClanWar>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ClanWar {
+    #[serde(rename = "seasonID")]
+    season_id: Option<i32>,
+    #[serde(rename = "createdDate")]
+    created_date: String,
+    participants: Vec<WarParticipant>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CurrentWar {
+    state: String,
+    #[serde(rename = "warEndTime")]
+    war_end_time: Option<String>,
+    clan: CurrentWarClan,
+    participants: Vec<WarParticipant>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CurrentWarClan {
+    tag: ClanTag,
+    name: String,
+    #[serde(rename = "badgeId")]
+    badge_id: i32,
+    #[serde(rename = "clanScore")]
+    clan_score: i32,
+    participants: i32,
+    #[serde(rename = "battlesPlayed")]
+    battles_played: i32,
+    wins: i32,
+    crowns: i32,
+}
+
+pub struct ClanApi<'a> {
+    client: &'a mut Client,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct WarParticipant {
+    tag: ClanTag,
+    name: String,
+    #[serde(rename = "cardsEarned")]
+    cards_earned: i32,
+    #[serde(rename = "battlesPlayed")]
+    battles_played: i32,
+    wins: i32,
+}
+
+impl<'a> ClanApi<'a> {
+    pub fn new(client: &'a mut Client) -> Self {
+        Self { client }
+    }
+
+    pub fn search(&mut self, query: ClanSearch) -> reqwest::Result<SearchResponse<Clan>> {
+        let url = query.build();
+        self.client.get(url).send()?.json()
+    }
+
+    pub fn clan(&mut self, tag: ClanTag) -> reqwest::Result<Clan> {
+        let url = format!("{}/clans/{}", crate::APIROOT, tag);
+        self.client.get(Url::parse(&url).unwrap()).send()?.json()
+    }
+
+    pub fn members(&mut self, tag: ClanTag) -> reqwest::Result<SearchResponse<ClanMember>> {
+        let url = format!("{}/clans/{}/members", crate::APIROOT, tag);
+        self.client.get(Url::parse(&url).unwrap()).send()?.json()
+    }
+
+    pub fn warlog(&mut self, tag: ClanTag) -> reqwest::Result<SearchResponse<ClanWar>> {
+        let url = format!("{}/clans/{}/warlog", crate::APIROOT, tag);
+        self.client.get(Url::parse(&url).unwrap()).send()?.json()
+    }
+
+    pub fn current_war(&mut self, tag: ClanTag) -> reqwest::Result<CurrentWar> {
+        let url = format!("{}/clans/{}/currentwar", crate::APIROOT, tag);
+        self.client.get(Url::parse(&url).unwrap()).send()?.json()
+    }
 }
 
 impl<'a> ClanSearch<'a> {
@@ -201,6 +256,50 @@ impl<'a> ClanSearch<'a> {
         }
 
         Url::parse(&url).unwrap()
+    }
+}
+
+impl ClanTag {
+    pub fn new(tag: &str) -> Result<ClanTag, Error> {
+        if tag.is_empty() {
+            return Err(ClanTagError::EmptyClanTag.into());
+        }
+
+        if &tag[0..1] != "#" {
+            return Err(ClanTagError::MissingHash {
+                tag: tag.to_string(),
+            }
+            .into());
+        }
+
+        if !(tag.chars().skip(1).all(ClanTag::validation)) {
+            return Err(ClanTagError::NonAlphaNumericCharacter {
+                tag: tag.to_string(),
+            }
+            .into());
+        }
+
+        Ok(ClanTag(
+            utf8_percent_encode(tag, DEFAULT_ENCODE_SET).collect(),
+        ))
+    }
+
+    fn validation(c: char) -> bool {
+        //Hashtags should only contain these characters
+        //Numbers: 0, 2, 8, 9
+        //Letters: P, Y, L, Q, G, R, J, C, U, V
+        match c {
+            '0' | '2' | '8' | '9' | 'P' | 'Y' | 'L' | 'Q' | 'G' | 'R' | 'J' | 'C' | 'U' | 'V' => {
+                true
+            }
+            _ => false,
+        }
+    }
+}
+
+impl Display for ClanTag {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 

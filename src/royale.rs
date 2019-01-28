@@ -1,6 +1,8 @@
-use crate::clans::ClanSearch;
-use crate::clans::ClanTag;
-use reqwest::{self, header, Client, ClientBuilder, Response,Url};
+use crate::clans::*;
+use failure::Error;
+use reqwest::{self, header, Client, ClientBuilder, Response, Url};
+
+pub type RoyalError<T> = Result<T, Error>;
 
 #[derive(Clone)]
 pub struct Royale<'a> {
@@ -9,7 +11,7 @@ pub struct Royale<'a> {
 }
 
 impl<'a> Royale<'a> {
-    pub fn new(key: &'a str) -> reqwest::Result<Self> {
+    pub fn new(key: &'a str) -> RoyalError<Self> {
         let mut headers = header::HeaderMap::new();
 
         headers.insert(
@@ -23,14 +25,7 @@ impl<'a> Royale<'a> {
         Ok(Royale { key, client })
     }
 
-    pub fn search_clans(&mut self, query: ClanSearch) -> reqwest::Result<Response> {
-        let url = query.build();
-        self.client.get(url).send()
-    }
-
-    pub fn clan(tag: ClanTag) {
-        let url = format!("{}/clans/{:?}",crate::APIROOT,tag);
-        let url = Url::parse(&url).unwrap();
-
+    pub fn clans(&mut self) -> ClanApi {
+        ClanApi::new(&mut self.client)
     }
 }
