@@ -2,8 +2,8 @@ extern crate rusty_royale;
 #[macro_use]
 extern crate serde_json;
 
-use rusty_royale::Royale;
-use rusty_royale::{Clan, ClanSearch, ClanTag, SearchResponse};
+use rusty_royale::{Royale,SearchResponse};
+use rusty_royale::clans::{Clan, ClanSearch, Tag};
 
 fn main() {
     
@@ -11,7 +11,7 @@ fn main() {
 
     let resp = royale
         .clans()
-        .current_war(ClanTag::new("#8VG2C9CJ").unwrap())
+        .current_war(Tag::new("#8VG2C9CJ").unwrap())
         .unwrap();
 
     println!("{:#?}", resp);

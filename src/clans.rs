@@ -3,10 +3,11 @@ use reqwest::{self, Client,Url};
 use serde::{Deserialize, Serialize};
 use std::fmt::{self, Display};
 use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
+use crate::SearchResponse;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Clan {
-    tag: ClanTag,
+    tag: Tag,
     name: String,
     #[serde(rename = "badgeId")]
     badge_id: i32,
@@ -68,15 +69,15 @@ pub struct Arena {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ClanTag(String);
+pub struct Tag(String);
 
 #[derive(Debug, Fail)]
-pub enum ClanTagError {
+pub enum TagError {
     #[fail(display = "Empty clan tag")]
-    EmptyClanTag,
+    EmptyTag,
     #[fail(display = "Missing `#` : {}", tag)]
     MissingHash { tag: String },
-    #[fail(display = "Invalid Clantag {}", tag)]
+    #[fail(display = "Invalid Tag {}", tag)]
     NonAlphaNumericCharacter { tag: String },
 }
 
@@ -96,17 +97,7 @@ pub struct ClanSearch<'a> {
     before: Option<i32>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct SearchResponse<T: Serialize> {
-    items: Vec<T>,
-    #[serde(skip_deserializing)]
-    paging: Paging,
-}
 
-#[derive(Debug, Serialize, Clone, Default)]
-pub struct Paging {
-    cursors: Vec<()>,
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WarLog {
@@ -133,7 +124,7 @@ pub struct CurrentWar {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CurrentWarClan {
-    tag: ClanTag,
+    tag: Tag,
     name: String,
     #[serde(rename = "badgeId")]
     badge_id: i32,
@@ -152,7 +143,7 @@ pub struct ClanApi<'a> {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WarParticipant {
-    tag: ClanTag,
+    tag: Tag,
     name: String,
     #[serde(rename = "cardsEarned")]
     cards_earned: i32,
@@ -171,22 +162,22 @@ impl<'a> ClanApi<'a> {
         self.client.get(url).send()?.json()
     }
 
-    pub fn clan(&mut self, tag: ClanTag) -> reqwest::Result<Clan> {
+    pub fn clan(&mut self, tag: Tag) -> reqwest::Result<Clan> {
         let url = format!("{}/clans/{}", crate::APIROOT, tag);
         self.client.get(Url::parse(&url).unwrap()).send()?.json()
     }
 
-    pub fn members(&mut self, tag: ClanTag) -> reqwest::Result<SearchResponse<ClanMember>> {
+    pub fn members(&mut self, tag: Tag) -> reqwest::Result<SearchResponse<ClanMember>> {
         let url = format!("{}/clans/{}/members", crate::APIROOT, tag);
         self.client.get(Url::parse(&url).unwrap()).send()?.json()
     }
 
-    pub fn warlog(&mut self, tag: ClanTag) -> reqwest::Result<SearchResponse<ClanWar>> {
+    pub fn warlog(&mut self, tag: Tag) -> reqwest::Result<SearchResponse<ClanWar>> {
         let url = format!("{}/clans/{}/warlog", crate::APIROOT, tag);
         self.client.get(Url::parse(&url).unwrap()).send()?.json()
     }
 
-    pub fn current_war(&mut self, tag: ClanTag) -> reqwest::Result<CurrentWar> {
+    pub fn current_war(&mut self, tag: Tag) -> reqwest::Result<CurrentWar> {
         let url = format!("{}/clans/{}/currentwar", crate::APIROOT, tag);
         self.client.get(Url::parse(&url).unwrap()).send()?.json()
     }
@@ -259,27 +250,27 @@ impl<'a> ClanSearch<'a> {
     }
 }
 
-impl ClanTag {
-    pub fn new(tag: &str) -> Result<ClanTag, Error> {
+impl Tag {
+    pub fn new(tag: &str) -> Result<Tag, Error> {
         if tag.is_empty() {
-            return Err(ClanTagError::EmptyClanTag.into());
+            return Err(TagError::EmptyTag.into());
         }
 
         if &tag[0..1] != "#" {
-            return Err(ClanTagError::MissingHash {
+            return Err(TagError::MissingHash {
                 tag: tag.to_string(),
             }
             .into());
         }
 
-        if !(tag.chars().skip(1).all(ClanTag::validation)) {
-            return Err(ClanTagError::NonAlphaNumericCharacter {
+        if !(tag.chars().skip(1).all(Tag::validation)) {
+            return Err(TagError::NonAlphaNumericCharacter {
                 tag: tag.to_string(),
             }
             .into());
         }
 
-        Ok(ClanTag(
+        Ok(Tag(
             utf8_percent_encode(tag, DEFAULT_ENCODE_SET).collect(),
         ))
     }
@@ -297,7 +288,7 @@ impl ClanTag {
     }
 }
 
-impl Display for ClanTag {
+impl Display for Tag {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.0)
     }
