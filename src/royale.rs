@@ -1,4 +1,5 @@
-use crate::clans::*;
+use crate::clans::ClanApi;
+use crate::players::PlayerApi;
 use failure::Error;
 use reqwest::{self, header, Client};
 
@@ -27,5 +28,9 @@ impl<'a> Royale<'a> {
 
     pub fn clans(&mut self) -> ClanApi {
         ClanApi::new(&mut self.client)
+    }
+
+    pub fn players(&mut self) -> PlayerApi {
+        PlayerApi::new(&mut self.client)
     }
 }
