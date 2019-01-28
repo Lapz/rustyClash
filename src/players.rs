@@ -39,11 +39,14 @@ pub struct Player {
     clan_cards_collected: i32,
     clan: ClanBase,
     #[serde(rename = "leagueStatistics")]
+
+   
     league_statistics: LeagueStatistics,
     achievements: Vec<Acheivement>,
     cards: Vec<Card>,
     #[serde(rename = "currentFavouriteCard")]
     current_favourite_card: Card,
+    badges:Vec<Badge>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -61,6 +64,16 @@ pub struct ClanBase {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct Badge {
+    name:String,
+    level:Option<i32>,
+    #[serde(rename = "maxLevel")]
+    max_level:Option<i32>,
+    progress:Option<i32>,
+    target:Option<i32>
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct LeagueStatistics {
     #[serde(rename = "currentSeason")]
     current_season: SeasonStatistics,
@@ -72,10 +85,10 @@ pub struct LeagueStatistics {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SeasonStatistics {
-    id: String,
+    id: Option<String>,
     trophies: i32,
     #[serde(rename = "bestTrophies")]
-    best_trophies: i32,
+    best_trophies: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -90,6 +103,7 @@ pub struct Acheivement {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Card {
     name: String,
+    id:i32,
     level: i32,
     #[serde(rename = "iconUrls")]
     max_level: i32,
@@ -160,7 +174,7 @@ impl<'a> PlayerApi<'a> {
 
     pub fn player(&mut self,tag:Tag) -> reqwest::Result<Player> {
         let url = format!("{}/players/{}", crate::APIROOT, tag);
-    println!("{}", self.client.get(Url::parse(&url).unwrap()).send()?.json::<serde_json::Value>().unwrap());
+    println!("{:#?}", self.client.get(Url::parse(&url).unwrap()).send()?.json::<serde_json::Value>().unwrap());
         self.client.get(Url::parse(&url).unwrap()).send()?.json()
     }
 

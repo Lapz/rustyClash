@@ -10,7 +10,7 @@ fn main() {
 
     let resp = royale
         .players()
-        .player(Tag::new("#8VG2C9CJ").unwrap())
+        .player(Tag::new("#8Q820C0").unwrap())
         .unwrap();
 
     println!("{:#?}", resp);
