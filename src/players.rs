@@ -142,7 +142,7 @@ pub struct BattleLog {
     kind:String,
     #[serde(rename = "battleTime")]
     battle_time:String,
-    arean:Arena,
+    arena:Arena,
     #[serde(rename = "gameMode")]
     game_mode:GameMode,
     #[serde(rename = "deckSelection")]
@@ -156,12 +156,12 @@ pub struct BattleLogTeam {
     tag:Tag,
     name:String,
     #[serde(rename = "startingTrophies")]
-    starting_trophies:i32,
+    starting_trophies:Option<i32>,
     #[serde(rename = "trophyChange")]
-    trophy_change:i32,
+    trophy_change:Option<i32>,
     crowns:i32,
-    clan:ClanBase,
-    cards:Vec<Card>
+    clan:Option<ClanBase>,
+    cards:Vec<FavouriteCard>
 }
 
 
@@ -188,13 +188,13 @@ impl<'a> PlayerApi<'a> {
 
     pub fn upcoming_chests(&mut self, tag: &Tag) -> reqwest::Result<UpcomingChests> {
         let url = format!("{}/players/{}/upcomingchests ", crate::APIROOT, tag);
+        
         self.client.get(Url::parse(&url).unwrap()).send()?.json()
     }
 
-    pub fn battlelog(&mut self, tag: &Tag) -> reqwest::Result<Result<Vec<BattleLog>,ApiError>> {
+    pub fn battlelog(&mut self, tag: &Tag) -> reqwest::Result<Vec<BattleLog>> {
         let url = format!("{}/players/{}/battlelog", crate::APIROOT, tag);
 
-        println!("{:#?}", self.client.get(Url::parse(&url).unwrap()).send()?.json::<Vec<String>()?);
         self.client.get(Url::parse(&url).unwrap()).send()?.json()
     }
 
