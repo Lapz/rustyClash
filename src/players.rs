@@ -39,13 +39,11 @@ pub struct Player {
     clan_cards_collected: i32,
     clan: ClanBase,
     #[serde(rename = "leagueStatistics")]
-
-   
     league_statistics: LeagueStatistics,
     achievements: Vec<Acheivement>,
     cards: Vec<Card>,
     #[serde(rename = "currentFavouriteCard")]
-    current_favourite_card: Card,
+    current_favourite_card: FavouriteCard,
     badges:Vec<Badge>,
 }
 
@@ -78,7 +76,7 @@ pub struct LeagueStatistics {
     #[serde(rename = "currentSeason")]
     current_season: SeasonStatistics,
     #[serde(rename = "previousSeason")]
-    previous_season: SeasonStatistics,
+    previous_season: Option<SeasonStatistics>,
     #[serde(rename = "bestSeason")]
     best_season: SeasonStatistics,
 }
@@ -105,9 +103,19 @@ pub struct Card {
     name: String,
     id:i32,
     level: i32,
-    #[serde(rename = "iconUrls")]
+    #[serde(rename = "maxLevel")]
     max_level: i32,
-    count: Option<i32>,
+    count: i32,
+    #[serde(rename = "iconUrls")]
+    icon_urls: IconUrl,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FavouriteCard {
+    name:String,
+    id:i32,
+    #[serde(rename = "maxLevel")]
+    max_level:i32,
     #[serde(rename = "iconUrls")]
     icon_urls: IconUrl,
 }
@@ -172,19 +180,21 @@ impl<'a> PlayerApi<'a> {
         Self { client }
     }
 
-    pub fn player(&mut self,tag:Tag) -> reqwest::Result<Player> {
+    pub fn player(&mut self,tag:&Tag) -> reqwest::Result<Player> {
         let url = format!("{}/players/{}", crate::APIROOT, tag);
-    println!("{:#?}", self.client.get(Url::parse(&url).unwrap()).send()?.json::<serde_json::Value>().unwrap());
+
         self.client.get(Url::parse(&url).unwrap()).send()?.json()
     }
 
-    pub fn upcoming_chests(&mut self, tag: Tag) -> reqwest::Result<UpcomingChests> {
+    pub fn upcoming_chests(&mut self, tag: &Tag) -> reqwest::Result<UpcomingChests> {
         let url = format!("{}/players/{}/upcomingchests ", crate::APIROOT, tag);
         self.client.get(Url::parse(&url).unwrap()).send()?.json()
     }
 
-    pub fn battlelog(&mut self, tag: Tag) -> reqwest::Result<Result<BattleLog,ApiError>> {
+    pub fn battlelog(&mut self, tag: &Tag) -> reqwest::Result<Result<Vec<BattleLog>,ApiError>> {
         let url = format!("{}/players/{}/battlelog", crate::APIROOT, tag);
+
+        println!("{:#?}", self.client.get(Url::parse(&url).unwrap()).send()?.json::<Vec<String>()?);
         self.client.get(Url::parse(&url).unwrap()).send()?.json()
     }
 
