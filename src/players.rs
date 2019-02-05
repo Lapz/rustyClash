@@ -1,6 +1,7 @@
 use crate::Tag;
 use serde::{Deserialize, Serialize};
 use reqwest::{Client,Url};
+use crate::cards::{Card,FavouriteCard};
 use crate::util::ApiError;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -98,32 +99,7 @@ pub struct Acheivement {
     info: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Card {
-    name: String,
-    id:i32,
-    level: i32,
-    #[serde(rename = "maxLevel")]
-    max_level: i32,
-    count: i32,
-    #[serde(rename = "iconUrls")]
-    icon_urls: IconUrl,
-}
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct FavouriteCard {
-    name:String,
-    id:i32,
-    #[serde(rename = "maxLevel")]
-    max_level:i32,
-    #[serde(rename = "iconUrls")]
-    icon_urls: IconUrl,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct IconUrl {
-    medium: String,
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpcomingChests {
