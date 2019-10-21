@@ -123,6 +123,14 @@ pub struct CurrentWarClan {
     crowns: i32,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ClanBase {
+    tag: Tag,
+    name: String,
+    #[serde(rename = "badgeId")]
+    badge_id: i32,
+}
+
 pub struct ClanApi<'a> {
     client: &'a mut Client,
 }

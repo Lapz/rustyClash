@@ -3,6 +3,7 @@ pub mod players;
 mod royale;
 pub mod cards;
 pub mod util;
+pub mod tournaments;
 
 const APIROOT: &str = "https://api.clashroyale.com/v1";
 

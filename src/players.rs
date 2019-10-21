@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use reqwest::{Client,Url};
 use crate::cards::{Card,FavouriteCard};
 use crate::util::ApiError;
+use crate::clans::ClanBase;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Player {
@@ -54,13 +55,7 @@ pub struct Arena {
     name: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ClanBase {
-    tag: Tag,
-    name: String,
-    #[serde(rename = "badgeId")]
-    badge_id: i32,
-}
+
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Badge {
